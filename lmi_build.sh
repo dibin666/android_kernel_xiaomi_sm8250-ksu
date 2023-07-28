@@ -19,8 +19,14 @@ if [ "$choice" = "y" ]; then
   fi
 fi
 
-# 内核工作目录
-export KERNEL_DIR=$(pwd)
+# 开始的时间
+start=`date +%s`
+
+# 原 boot 目录,请重命名为 boot.img
+export BOOT_DIR=/mnt/disk/boot/boot.img
+
+# 新 boot 输出目录
+export NEW_BOOT_DIR=/mnt/disk/out
 
 # 内核 defconfig 文件
 export KERNEL_DEFCONFIG=lmi_defconfig
@@ -50,22 +56,30 @@ export BUILD_ARGS="-j$(nproc --all) ${DEF_ARGS}"
 make ${DEF_ARGS} ${KERNEL_DEFCONFIG}
 make ${BUILD_ARGS}
 
-# 复制编译出的文件到外部目录
-if [[ -f out/arch/arm64/boot/Image.gz-dtb ]]; then
-  cp out/arch/arm64/boot/Image.gz-dtb /mnt/disk/lmiput/Image.gz-dtb
-elif [[ -f out/arch/arm64/boot/Image-dtb ]]; then
-  cp out/arch/arm64/boot/Image-dtb /mnt/disk/lmiout/Image-dtb
-elif [[ -f out/arch/arm64/boot/Image.gz ]]; then
-  cp out/arch/arm64/boot/Image.gz /mnt/disk/lmiout/Image.gz
-elif [[ -f out/arch/arm64/boot/Image ]]; then
-  cp out/arch/arm64/boot/Image /mnt/disk/lmiout/Image
-fi
+# 获取 magiskbootx86_64
+cd out/arch/arm64/boot
+wget https://github.com/dibin666/toolchains/releases/download/magiskboot/magiskbootx86_64
+chmod +x magiskbootx86_64
 
-if [ -f out/arch/arm64/boot/dtbo.img ]; then
-  cp out/arch/arm64/boot/dtbo.img /mnt/disk/lmiout/dtbo.img
-fi
+#复制原 boot 到 out 目录
+cp $BOOT_DIR ./
+
+# 替换原 boot 的内核
+./magiskbootx86_64 unpack boot.img
+mv -f Image kernel
+./magiskbootx86_64 repack boot.img
+
+# 复制替换后的 boot 到外部目录
+cp new-boot.img $NEW_BOOT_DIR
 
 # 清理目录
-rm -rf AnyKernel3
-rm -rf KernelSU
 rm -rf out
+
+# 结束时间
+end=`date +%s`
+
+# 总耗时
+time=`echo $start $end | awk '{print $2-$1}'`
+echo "---------------------------------------"
+echo "内核编译完成！编译总耗时：${time}s"
+echo "---------------------------------------"
