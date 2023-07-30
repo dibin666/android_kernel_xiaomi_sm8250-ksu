@@ -22,6 +22,9 @@ fi
 # 开始的时间
 start=`date +%s`
 
+# 内核工作目录
+export KERNEL_DIR=$(pwd)
+
 # 原 boot 目录,请重命名为 boot.img
 export BOOT_DIR=/mnt/disk/boot/boot.img
 
@@ -73,7 +76,7 @@ mv -f Image kernel
 cp new-boot.img $NEW_BOOT_DIR
 
 # 清理目录
-cd ../../../../
+cd $KERNEL_DIR
 rm -rf out
 
 # 结束时间
