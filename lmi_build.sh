@@ -73,6 +73,7 @@ mv -f Image kernel
 cp new-boot.img $NEW_BOOT_DIR
 
 # 清理目录
+cd ../../../../
 rm -rf out
 
 # 结束时间
